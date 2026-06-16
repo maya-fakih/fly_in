@@ -19,3 +19,4 @@ class Hub:
     hub_type: HubType
     # how should i connect hubs together...
     connections = list
+    
