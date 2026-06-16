@@ -23,18 +23,18 @@ class GraphParser():
                     if line.startswith('#'):
                         continue
                     if first_line:
-                        # call check 1st line
-                        pass
+                        # nb_drone = self.check_first_line(line)
+                        first_line = False
 
         except Exception as e:
-            print(f'[Parsing]: {e}')
+            print('[Parsing]: Error!')
+            print(e)
 
-    def check_first_line(self, line):
+    def check_first_line(self, line) -> int:
         """Validate the format of the first configuration line."""
         try:
+            self.validate_line(line)
             to_test = line.split(':')
-            if to_test.len() != 2:
-                raise FormatError()
             if to_test[0] != 'nb_drones':
                 raise DroneNumberError
             val = to_test[1]
@@ -44,3 +44,8 @@ class GraphParser():
                 raise DroneNumberError
         except Exception as e:
             raise (e)
+
+    def validate_line(self, line):
+        to_test = line.split(':')
+        if to_test.len() != 2:
+            raise FormatError(line)

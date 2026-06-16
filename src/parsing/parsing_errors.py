@@ -22,7 +22,8 @@ class DroneNumberError(ParsingError):
 class FormatError(ParsingError):
     """Raised when input format is invalid."""
 
-    def __init__(self):
+    def __init__(self, line):
         """Fromat error in config maze files."""
-        msg = '[Parsing Error]: Invalid format'
+        e = 'Line should be of format key: value.'
+        msg = f'[Parsing Error]: {e} Error at line {line}'
         super().__init__(msg)
