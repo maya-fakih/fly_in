@@ -15,11 +15,14 @@ class DroneNumberError(ParsingError):
 
     def __init__(self):
         """Initialize the drone number error with a standard message."""
-        msg = '[Parsing Error]: Invalid input'
+        msg = '[Parsing Error]: Invalid drone number'
         super().__init__(msg)
 
 
 class FormatError(ParsingError):
     """Raised when input format is invalid."""
 
-    pass
+    def __init__(self):
+        """Fromat error in config maze files."""
+        msg = '[Parsing Error]: Invalid format'
+        super().__init__(msg)

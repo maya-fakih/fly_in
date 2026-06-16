@@ -2,7 +2,7 @@
 
 from typing import Dict
 
-from parsing_errors import DroneNumberError
+from parsing_errors import DroneNumberError, FormatError
 
 
 class GraphParser():
@@ -34,6 +34,13 @@ class GraphParser():
         try:
             to_test = line.split(':')
             if to_test.len() != 2:
-                raise DroneNumberError()
-        except Exception:
-            pass
+                raise FormatError()
+            if to_test[0] != 'nb_drones':
+                raise DroneNumberError
+            val = to_test[1]
+            if isinstance(val, (int)) and not isinstance(val, bool):
+                return (int(val))
+            else:
+                raise DroneNumberError
+        except Exception as e:
+            raise (e)
