@@ -1,5 +1,7 @@
 """Custom exceptions raised during configuration parsing."""
 
+from typing import Optional
+
 
 class ParsingError(Exception):
     """Base exception for parsing errors.
@@ -16,9 +18,12 @@ class ParsingError(Exception):
 class DroneNumberError(ParsingError):
     """Raised when the drone number line is malformed."""
 
-    def __init__(self) -> None:
-        """Initialize DroneNumberError."""
-        super().__init__('[Parsing Error]: Invalid drone number')
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize DroneNumberError, optionally including a line number."""
+        msg = '[Parsing Error]: Invalid drone number'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 
 class TypesError(ParsingError):
@@ -32,45 +37,59 @@ class TypesError(ParsingError):
 class IntTypeError(TypesError):
     """Raised when the expected type is int but does not comply."""
 
-    def __init__(self) -> None:
-        """Initialize IntTypeError."""
-        super().__init__('[Parsing Error]: Not a valid integer')
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize IntTypeError, optionally including a line number."""
+        msg = '[Parsing Error]: Not a valid integer'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 
 class NameTypeError(TypesError):
     """Raised when the hub name line is malformed."""
 
-    def __init__(self) -> None:
-        """Initialize NameTypeError."""
-        super().__init__('[Parsing Error]: Invalid Hub name')
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize NameTypeError, optionally including a line number."""
+        msg = '[Parsing Error]: Invalid Hub name'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 
 class MetaDataTypeError(TypesError):
     """Raised when the metadata line is malformed."""
 
-    def __init__(self) -> None:
-        """Initialize MetaDataTypeError."""
-        super().__init__('[Parsing Error]: Invalid Metadata')
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize MetaDataTypeError, optionally including a line number."""
+        msg = '[Parsing Error]: Invalid Metadata'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 
 class CoordinatesTypeError(TypesError):
     """Raised when the hub has duplicate coords or the line is malformed."""
 
-    def __init__(self) -> None:
-        """Initialize CoordinatesTypeError."""
-        super().__init__('[Parsing Error]: Invalid coordinates')
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize coord error, optionally including a line number."""
+        msg = '[Parsing Error]: Invalid coordinates'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 
 class HubTypeError(TypesError):
     """Raised when the hub type is invalid (start_hub, end_hub, hub)."""
 
-    def __init__(self) -> None:
-        """Initialize HubTypeError."""
-        msg = (
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize HubTypeError, optionally including a line number."""
+        base = (
             '[Parsing Error]: Invalid hub type should be '
             'start_hub, end_hub, or hub'
         )
-        super().__init__(msg)
+        if line is not None:
+            base = f'{base}. Error at line {line}'
+        super().__init__(base)
 
 
 class FormatError(ParsingError):

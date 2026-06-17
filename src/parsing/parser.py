@@ -37,7 +37,7 @@ class GraphParser:
                     elif state == 3:
                         continue
             self.parsing_safe = True
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             print('[Parsing]: Error!')
             print(exc)
 
@@ -47,6 +47,7 @@ class GraphParser:
         Raises errors.HubFormat if the line is not a valid hub definition.
         """
         parts = self.validate_line(line)
+        # sequence allows for read only so that mypy doesnt scream
         possible_hubs: Sequence[str] = (
             'start_hub',
             'hub',
@@ -55,6 +56,10 @@ class GraphParser:
         key = parts[0].strip()
         if key not in possible_hubs:
             raise errors.HubFormat(line)
+
+        if '[' not in parts[1] or ']' not in parts[1]:
+            raise errors.MetaDataTypeError(line)
+
         return {}
 
     def check_first_line(self, line: str) -> int:
