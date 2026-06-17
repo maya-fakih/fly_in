@@ -1,70 +1,83 @@
 """Graph configuration parser and validation logic."""
 
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
-from parsing_errors import DroneNumberError, FormatError
+from . import parsing_errors as errors
 
 
-class GraphParser():
+class GraphParser:
     """Parse graph configuration files and validate their contents."""
 
-    def __init__(self, config: str):
-        """Initialize the parser with the path to the configuration file."""
+    def __init__(self, config: str) -> None:
+        """Initialize the parser with the path to the configuration file.
+
+        Args:
+            config: Path to the configuration file.
+        """
         self.config_file = config
-        self.configs = {}
+        self.configs: Dict[str, object] = {}
         self.parsing_safe = False
         self.hub_state = 1
 
-    def load_file(self):
+    def load_file(self) -> None:
         """Load and parse the configuration file line by line."""
         state = 1
         try:
             with open(self.config_file, 'r') as config_file:
-
                 for line in config_file:
                     if line.startswith('#'):
                         continue
                     if state == 1:
-                        self.configs["nb_drones"] = self.check_first_line
-                        self.configs["hubs"] = {}
+                        self.configs['nb_drones'] = self.check_first_line(line)
+                        self.configs['hubs'] = {}
                         state = 2
                     elif state == 2:
-                        pass
+                        # Placeholder for hub parsing
+                        continue
                     elif state == 3:
-                        pass
+                        continue
             self.parsing_safe = True
-        except Exception as e:
+        except Exception as exc:  # pragma: no cover
             print('[Parsing]: Error!')
-            print(e)
+            print(exc)
 
-    def validate_hub(self, line) -> Dict:
+    def validate_hub(self, line: str) -> Dict[str, object]:
+        """Validate a hub definition line and return parsed parts.
+
+        Raises errors.HubFormat if the line is not a valid hub definition.
+        """
         parts = self.validate_line(line)
-        # here i should parse lines, validate hubs, w then check the self.configs[hubs] for dups
+        possible_hubs: Sequence[str] = (
+            'start_hub',
+            'hub',
+            'end_hub',
+        )
+        key = parts[0].strip()
+        if key not in possible_hubs:
+            raise errors.HubFormat(line)
+        return {}
 
-
-
-
-    def check_first_line(self, line) -> int:
-        """Validate the format of the first configuration line."""
-        try:
-            self.validate_line(line)
-            to_test = line.split(':')
-            if to_test[0] != 'nb_drones':
-                raise DroneNumberError
-            val = to_test[1]
-            if isinstance(val, (int)) and not isinstance(val, bool):
-                return (int(val))
-            else:
-                raise DroneNumberError
-        except Exception as e:
-            raise (e)
-
-    def validate_line(self, line) -> List:
+    def check_first_line(self, line: str) -> int:
+        """Validate the format of the first config line and return int."""
+        self.validate_line(line)
         to_test = line.split(':')
-        if to_test.len() != 2:
-            raise FormatError(line)
+        if to_test[0].strip() != 'nb_drones':
+            raise errors.DroneNumberError()
+        val_str = to_test[1].strip()
+        try:
+            val = int(val_str)
+        except ValueError:
+            raise errors.DroneNumberError()
+        return val
+
+    def validate_line(self, line: str) -> List[str]:
+        """Split a line into key and value and validate the format."""
+        to_test = line.split(':')
+        if len(to_test) != 2:
+            raise errors.FormatError(line)
         return to_test
 
-    def is_int(val: int) -> bool:
-        if isinstance(val, (int)) and not isinstance(val, bool):
-            return (int(val))
+    @staticmethod
+    def is_int(val: object) -> bool:
+        """Return True if `val` is an int but not a bool."""
+        return isinstance(val, int) and not isinstance(val, bool)

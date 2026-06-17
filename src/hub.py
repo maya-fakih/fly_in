@@ -1,5 +1,6 @@
 """Hub file for hub representation."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 
 from hub_type import HubType
 
@@ -17,6 +18,5 @@ class Hub:
     color: str
     max_drones: int
     hub_type: HubType
-    # how should i connect hubs together...
-    connections = list
-    
+    # connections to other hubs (names or identifiers)
+    connections: List[str] = field(default_factory=list)
