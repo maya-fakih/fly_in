@@ -66,18 +66,6 @@ class MetaDataTypeError(TypesError):
             msg = f'{msg}. Error at line {line}'
         super().__init__(msg)
 
-
-class CoordinatesTypeError(TypesError):
-    """Raised when the hub has duplicate coords or the line is malformed."""
-
-    def __init__(self, line: Optional[object] = None) -> None:
-        """Initialize coord error, optionally including a line number."""
-        msg = '[Parsing Error]: Invalid coordinates'
-        if line is not None:
-            msg = f'{msg}. Error at line {line}'
-        super().__init__(msg)
-
-
 class HubTypeError(TypesError):
     """Raised when the hub type is invalid (start_hub, end_hub, hub)."""
 
@@ -117,6 +105,42 @@ class HubFormat(FormatError):
         )
         super().__init__(msg)
 
+class DuplicateError(ParsingError):
+    """Raised when the data is duplicated."""
+
+    def __init__(self, msg: str = '[Parsing Error]: Duplicated data.') -> None:
+        """Initialize TypesError with an optional message."""
+        super().__init__(msg)
+
+class NameDuplicateError(DuplicateError):
+    """Raised when the hub name already exists."""
+
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize NameDuplicateError, optionally including a line number."""
+        msg = '[Parsing Error]: Duplicate Hub name'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
+
+class CoordinatesTypeError(DuplicateError):
+    """Raised when the hub has duplicate coords or the line is malformed."""
+
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize coord error, optionally including a line number."""
+        msg = '[Parsing Error]: Invalid coordinates'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
+
+class DuplicateZone(DuplicateError):
+    """Raised when the map has duplicate start or end zones."""
+
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize duplicate start-end hubs."""
+        msg = '[Parsing Error]: You cannot have more than one start and end hub'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 # Public API for from ... import *
 __all__ = [
@@ -130,4 +154,6 @@ __all__ = [
     'HubTypeError',
     'FormatError',
     'HubFormat',
+    'NameDuplicateError',
+    'DuplicateZone',
 ]

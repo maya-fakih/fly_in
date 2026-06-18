@@ -48,35 +48,107 @@ class GraphParser:
         """
         parts = self.validate_line(line)
         # sequence allows for read only so that mypy doesnt scream
-        possible_hubs: Sequence[str] = (
-            'start_hub',
-            'hub',
-            'end_hub',
-        )
-        key = parts[0].strip()
-        if key not in possible_hubs:
-            raise errors.HubFormat(line)
+        hub_type = parts[0].strip()
+        self.test_zone(hub_type, line)
+        for character in parts[1]:
+            if character is ' ':
+                name_ends = parts[1].index(character)
+        name = parts[1][:,name_ends]
+        self.test_name(name)
 
-        if '[' not in parts[1] or ']' not in parts[1]:
+        rest = parts[1][name_ends, :]
+        if '[' not in rest or ']' not in rest:
             raise errors.MetaDataTypeError(line)
+        first_bracket = rest.index('[')
+        close_bracket = rest.index(']')
+        if first_bracket > close_bracket:
+            raise errors.MetaDataTypeError(line)
+        coords, metadata = rest[:first_bracket], rest[first_bracket + 1:close_bracket]
+        
+        x, y = coords.split()
+        self.test_coords(x, y, line)
 
-        return {}
+        metadata_parts = metadata.split()
+        metadata_dict = self.test_metadata(metadata_parts, line)
+        # return dict of {hub_type, name, x, ,y, metadata_dict}
+        # idk how figure out how to return it tmrw w parsing is done :)
+        return {''}
+    
+    def test_metadata(self, metadata: List, line: str) -> dict:
+        if metadata.length != 3:
+            raise errors.MetaDataTypeError(line)
+        for part in metadata:
+            if '=' not in part:
+                raise errors.MetaDataTypeError(line)
+        # check if metadata is valid (color, max_drones, zone)
+        # make sure it apears only once
+        # validate values
+        seen = set()
+        for part in metadata:
+            key, value = part.split('=')
+            if key in seen:
+                raise errors.MetaDataTypeError(line)
+            seen.add(key)
+            if key == 'color':
+                if not isinstance(value, str):
+                    raise errors.MetaDataTypeError(line)
+            elif key == 'max_drones':
+                if not self.is_int(value):
+                    raise errors.MetaDataTypeError(line)
+            elif key == 'zone':
+                self.test_zone(value, line)
+            else:
+                raise errors.MetaDataTypeError(line)
+        return {part.split('=')[0]: part.split('=')[1] for part in metadata}
+        
+        
+
+    def test_coords(self, x: int, y: int, line: str) -> None:
+        if not isinstance(x, int) or not isinstance(y, int):
+            raise errors.CoordinatesTypeError(line)
+        # check if the pair x y already exists in configs['hubs']['x'] , configs['hubs']['y']
+        poss_x = self.configs['hubs']['x']
+        poss_y = self.configs['hubs']['y']
+        for xi, yi in zip(poss_x, poss_y):
+            if xi == x and yi == y:
+                raise errors.CoordinatesDuplicateError(line)
+
+    def test_zone(self, zone: str, line: str) -> None:
+        possible_hubs: Sequence[str] = ('start_hub', 'hub', 'end_hub',)
+        if zone not in possible_hubs:
+            raise errors.HubFormat(line)
+        if zone in self.configs['hubs'] and zone != 'hub':
+            raise errors.DuplicateZone(line)
+
+    def test_name(self, name: str) -> None:
+        """Test if a name is valid."""
+        if not isinstance(name, str) or not name:
+            raise errors.NameTypeError(NameError)
+        # i dont know if this really checks all names or not :(
+        # we will check if it fails we come back here lol
+        if name in self.configs['hubs']['names']:
+            raise errors.NameDuplicateError(name)
+        if '-' in name or ' ' in name:
+            raise errors.NameTypeError(name)
+
 
     def check_first_line(self, line: str) -> int:
         """Validate the format of the first config line and return int."""
         self.validate_line(line)
         to_test = line.split(':')
         if to_test[0].strip() != 'nb_drones':
-            raise errors.DroneNumberError()
+            raise errors.DroneNumberError(line)
         val_str = to_test[1].strip()
         try:
             val = int(val_str)
+            if val <= 0:
+                raise errors.DroneNumberError(line)
         except ValueError:
-            raise errors.DroneNumberError()
+            raise errors.DroneNumberError(line)
         return val
 
     def validate_line(self, line: str) -> List[str]:
-        """Split a line into key and value and validate the format."""
+        """Split a line into zone and value and validate the format."""
         to_test = line.split(':')
         if len(to_test) != 2:
             raise errors.FormatError(line)
