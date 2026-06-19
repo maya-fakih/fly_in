@@ -7,7 +7,7 @@ def main():
 
     This function is currently a placeholder for the main program logic.
     """
-    parser = GraphParser("./maps/challenger/01_the_impossible_dream.txt")
+    parser = GraphParser("maps/easy/01_linear_path.txt")
     parser.load_file()
     if parser.parsing_safe:
         print("Parsing successful. Ready to proceed with the application logic.")   

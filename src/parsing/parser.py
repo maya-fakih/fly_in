@@ -72,29 +72,44 @@ class GraphParser:
         self.configs['hubs'][hub1]['connection'].add(hub2)
         self.configs['hubs'][hub2]['connection'].add(hub1)
 
+    def find_name(self, part: str):
+        name_found = False
+        for character in part:
+            if character == ' ' and not name_found:
+                continue
+            elif character != ' ':
+                print(character, end = '')
+                if not name_found:
+                    name_start = part.index(character)
+                name_found = True
+            elif character == ' ' and name_found:
+                name_end = part.index(character)
+                return (name_start, name_end)
+        raise errors.NameTypeError(part)
+
     def validate_hub(self, line: str) -> None:
         """Validate a hub line and store it in configs."""
         parts = self.validate_line(line)
         hub_type = parts[0].strip()
         self.test_zone(hub_type, line)
-
-        for character in parts[1]:
-            if character == ' ':
-                name_ends = parts[1].index(character)
-                break
-        name = parts[1][:name_ends]
+        print(f'hubtype = {hub_type}')
+        name_start, name_ends = self.find_name(parts[1])
+        data = parts[1].strip()
+        name = data[name_start:name_ends]
+        print(f'\nname = {name}')
         self.test_name(name)
 
-        rest = parts[1][name_ends + 1:]
+        rest = parts[1][name_ends:]
         if '[' not in rest or ']' not in rest:
             raise errors.MetaDataTypeError(line)
         start = rest.index('[')
         close = rest.index(']')
         if start > close:
             raise errors.MetaDataTypeError(line)
-        coords, metadata = rest[:start], rest[start + 1:close]
-
-        x, y = coords.split()
+        coords = rest[name_ends:start]
+        metadata = rest[start + 1:close]
+        coords.strip()
+        x, y = coords.split(' ')
         self.test_coords(x, y, line)
 
         metadata_parts = metadata.split()
@@ -188,6 +203,7 @@ class GraphParser:
 
     def validate_line(self, line: str) -> List[str]:
         """Split a line into key and value and validate the format."""
+        print(line)
         to_test = line.split(':')
         if len(to_test) != 2:
             raise errors.FormatError(line)
