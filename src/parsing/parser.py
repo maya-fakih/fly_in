@@ -15,66 +15,93 @@ class GraphParser:
             config: Path to the configuration file.
         """
         self.config_file = config
-        self.configs: Dict[str, object] = {}
+        self.configs: Dict = {
+            'nb_drones': 0,
+            'hubs': {},
+            'connections': {}
+        }
         self.parsing_safe = False
         self.hub_state = 1
 
     def load_file(self) -> None:
         """Load and parse the configuration file line by line."""
         hubs = ['start_hub', 'end_hub', 'hub']
+        first = True
         try:
             with open(self.config_file, 'r') as config_file:
                 for line in config_file:
                     if line.startswith('#'):
                         continue
-                    if line.trim(' ') is '':
+                    if line.isspace():
                         continue
-                    key, value = self.validate_line(line)
-
+                    if first:
+                        self.configs['nb_drones'] = self.check_first_line(line)
+                        first = False
+                        continue
+                    key, _ = self.validate_line(line)
                     if key in hubs:
-                        self.validate_hub()
-                    elif key is 'connection':
-                        self.validate_connection()
+                        self.validate_hub(line)
+                    elif key == 'connection':
+                        self.validate_connection(line)
             self.parsing_safe = True
         except Exception as exc:
             print('[Parsing]: Error!')
             print(exc)
 
-    def validate_hub(self, line: str):
-        """Validate a hub definition line and return parsed parts.
+    def validate_connection(self, line: str) -> None:
+        """Perfect doc string."""
+        key, value = self.validate_line(line)
+        test = value.strip().split(' ')
+        if len(test) != 2:
+            raise errors.FormatError(line)
+        hub1, hub2 = test[0].split('-')
+        metadata = test[1].strip(']', '[')
+        test2 = metadata.split('=')
+        if test2.len() != 2:
+            raise errors.FormatError(line)
+        if hub1 not in self.configs['hubs'] or hub2 not in self.configs['hubs']:
+            raise errors.ConnectionTypeError(line)
+        if test2 != 'max_link_capacity':
+            raise errors.FormatError(line)
+        
 
-        Raises errors.HubFormat if the line is not a valid hub definition.
-        """
+    def validate_hub(self, line: str):
+        """Perfect doc string."""
         parts = self.validate_line(line)
         # sequence allows for read only so that mypy doesnt scream
         hub_type = parts[0].strip()
         self.test_zone(hub_type, line)
         for character in parts[1]:
-            if character is ' ':
+            if character == ' ':
                 name_ends = parts[1].index(character)
-        name = parts[1][:,name_ends]
+        name = parts[1][: name_ends]
         self.test_name(name)
 
-        rest = parts[1][name_ends, :]
+        rest = parts[1][name_ends + 1:]
         if '[' not in rest or ']' not in rest:
             raise errors.MetaDataTypeError(line)
-        first_bracket = rest.index('[')
-        close_bracket = rest.index(']')
-        if first_bracket > close_bracket:
+        start = rest.index('[')
+        close = rest.index(']')
+        if start > close:
             raise errors.MetaDataTypeError(line)
-        coords, metadata = rest[:first_bracket], rest[first_bracket + 1:close_bracket]
-        
+        coords, metadata = rest[:start], rest[start + 1:close]
+
         x, y = coords.split()
         self.test_coords(x, y, line)
 
         metadata_parts = metadata.split()
-        metadata_dict = self.test_metadata(metadata_parts, line)
+        md = self.test_metadata(metadata_parts, line)
         # return dict of {hub_type, name, x, ,y, metadata_dict}
         # idk how figure out how to return it tmrw w parsing is done :)
-        self.configs['hubs'][hub_type] = {'name':name, 'x':x, 'y':y, 'meta_data':metadata_dict}
-    
+        self.configs['hubs'][name] = {
+            'type': hub_type,
+            'x': x, 'y': y,
+            'meta_data': md,
+            'connection': {None}}
+
     def test_metadata(self, metadata: List, line: str) -> dict:
-        if metadata.length != 3:
+        """Checks that metadata is valid."""
+        if len(metadata) != 3:
             raise errors.MetaDataTypeError(line)
         for part in metadata:
             if '=' not in part:
@@ -99,25 +126,30 @@ class GraphParser:
             else:
                 raise errors.MetaDataTypeError(line)
         return {part.split('=')[0]: part.split('=')[1] for part in metadata}
-        
-        
 
-    def test_coords(self, x: int, y: int, line: str) -> None:
-        if not isinstance(x, int) or not isinstance(y, int):
+    def test_coords(self, x: str, y: str, line: str) -> None:
+        """Checks that coords are unique and valid."""
+        try:
+            int(x)
+            int(y)
+        except ValueError:
             raise errors.CoordinatesTypeError(line)
-        # check if the pair x y already exists in configs['hubs']['x'] , configs['hubs']['y']
-        poss_x = self.configs['hubs']['x']
-        poss_y = self.configs['hubs']['y']
-        for xi, yi in zip(poss_x, poss_y):
-            if xi == x and yi == y:
+        for hub in self.configs['hubs'].values():
+            if hub['x'] == x and hub['y'] == y:
                 raise errors.CoordinatesDuplicateError(line)
 
     def test_zone(self, zone: str, line: str) -> None:
+        """Checks valid zone type."""
         possible_hubs: Sequence[str] = ('start_hub', 'hub', 'end_hub',)
         if zone not in possible_hubs:
             raise errors.HubFormat(line)
-        if zone in self.configs['hubs'] and zone != 'hub':
-            raise errors.DuplicateZone(line)
+        if zone != 'hub':
+            existing_types = [
+                hub['type'] for hub in self.configs['hubs'].values()
+                if isinstance(hub, dict) and 'type' in hub
+            ]
+            if zone in existing_types:
+                raise errors.DuplicateZone(line)
 
     def test_name(self, name: str) -> None:
         """Test if a name is valid."""
@@ -125,11 +157,10 @@ class GraphParser:
             raise errors.NameTypeError(NameError)
         # i dont know if this really checks all names or not :(
         # we will check if it fails we come back here lol
-        if name in self.configs['hubs']['names']:
+        if name in self.configs['hubs']:
             raise errors.NameDuplicateError(name)
         if '-' in name or ' ' in name:
             raise errors.NameTypeError(name)
-
 
     def check_first_line(self, line: str) -> int:
         """Validate the format of the first config line and return int."""
