@@ -13,6 +13,8 @@ from .parsing_errors import (
     TypesError,
 )
 
+from .parser import GraphParser
+
 __all__ = [
     'CoordinatesTypeError',
     'DroneNumberError',
