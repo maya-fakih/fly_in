@@ -21,27 +21,26 @@ class GraphParser:
 
     def load_file(self) -> None:
         """Load and parse the configuration file line by line."""
-        state = 1
+        hubs = ['start_hub', 'end_hub', 'hub']
         try:
             with open(self.config_file, 'r') as config_file:
                 for line in config_file:
                     if line.startswith('#'):
                         continue
-                    if state == 1:
-                        self.configs['nb_drones'] = self.check_first_line(line)
-                        self.configs['hubs'] = {}
-                        state = 2
-                    elif state == 2:
-                        # Placeholder for hub parsing
+                    if line.trim(' ') is '':
                         continue
-                    elif state == 3:
-                        continue
+                    key, value = self.validate_line(line)
+
+                    if key in hubs:
+                        self.validate_hub()
+                    elif key is 'connection':
+                        self.validate_connection()
             self.parsing_safe = True
         except Exception as exc:
             print('[Parsing]: Error!')
             print(exc)
 
-    def validate_hub(self, line: str) -> Dict[str, object]:
+    def validate_hub(self, line: str):
         """Validate a hub definition line and return parsed parts.
 
         Raises errors.HubFormat if the line is not a valid hub definition.
@@ -72,7 +71,7 @@ class GraphParser:
         metadata_dict = self.test_metadata(metadata_parts, line)
         # return dict of {hub_type, name, x, ,y, metadata_dict}
         # idk how figure out how to return it tmrw w parsing is done :)
-        return {''}
+        self.configs['hubs'][hub_type] = {'name':name, 'x':x, 'y':y, 'meta_data':metadata_dict}
     
     def test_metadata(self, metadata: List, line: str) -> dict:
         if metadata.length != 3:
@@ -151,6 +150,9 @@ class GraphParser:
         """Split a line into zone and value and validate the format."""
         to_test = line.split(':')
         if len(to_test) != 2:
+            raise errors.FormatError(line)
+        valid_keys = ['start_hub', 'end_hub', 'hub', 'connection']
+        if to_test[0] not in valid_keys:
             raise errors.FormatError(line)
         return to_test
 
