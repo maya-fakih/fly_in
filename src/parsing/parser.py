@@ -57,7 +57,7 @@ class GraphParser:
         hub1, hub2 = connection_parts[0].strip().split('-')
         # we should check that the hubs exist
         if hub1 not in self.configs['hubs'] or hub2 not in self.configs['hubs']:
-            raise errors.HubTypeError(line)
+            raise errors.ConnectionTypeError(line)
         # we should check that the connection doesn't already exist
         for conn in self.configs['hubs'][hub1]['connection']:
             if conn['target'] == hub2:
@@ -206,6 +206,8 @@ class GraphParser:
         """Split a line into key and value and validate the format."""
         if line.endswith('\n'):
             line = line[:-1]
+        if line.count(':') != 1:
+            raise errors.FormatError(line)
         to_test = line.split(':')
         if len(to_test) != 2:
             raise errors.FormatError(line)

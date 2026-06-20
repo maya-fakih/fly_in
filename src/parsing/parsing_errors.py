@@ -44,7 +44,6 @@ class IntTypeError(TypesError):
             msg = f'{msg}. Error at line {line}'
         super().__init__(msg)
 
-
 class NameTypeError(TypesError):
     """Raised when the hub name line is malformed."""
 
@@ -55,6 +54,15 @@ class NameTypeError(TypesError):
             msg = f'{msg}. Error at line {line}'
         super().__init__(msg)
 
+class ConnectionTypeError(TypesError):
+    """Raised when the connection line is malformed."""
+
+    def __init__(self, line: Optional[object] = None) -> None:
+        """Initialize ConnectionTypeError, optionally including a line number."""
+        msg = '[Parsing Error]: Invalid Connection'
+        if line is not None:
+            msg = f'{msg}. Error at line {line}'
+        super().__init__(msg)
 
 class MetaDataTypeError(TypesError):
     """Raised when the metadata line is malformed."""
@@ -162,4 +170,5 @@ __all__ = [
     'HubFormat',
     'NameDuplicateError',
     'DuplicateZone',
+    'ConnectionTypeError',
 ]

@@ -7,7 +7,7 @@ def main():
 
     This function is currently a placeholder for the main program logic.
     """
-    parser = GraphParser("maps/easy/01_linear_path.txt")
+    parser = GraphParser("maps/invalid/extra_colons.txt")
     parser.load_file()
     if parser.parsing_safe:
         print(f'Parsed configuration: {parser.configs}')
