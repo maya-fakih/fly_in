@@ -10,6 +10,7 @@ def main():
     parser = GraphParser("maps/easy/01_linear_path.txt")
     parser.load_file()
     if parser.parsing_safe:
+        print(f'Parsed configuration: {parser.configs}')
         print("Parsing successful. Ready to proceed with the application logic.")   
     else:
         print("Parsing failed. Please check the configuration file for errors.")

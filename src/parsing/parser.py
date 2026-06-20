@@ -1,5 +1,6 @@
 """Graph configuration parser and validation logic."""
 
+from copy import error
 from typing import Any, Dict, List, Sequence
 
 from . import parsing_errors as errors
@@ -48,91 +49,87 @@ class GraphParser:
     def validate_connection(self, line: str) -> None:
         """Validate a connection line and add it to both hubs."""
         _, value = self.validate_line(line)
-        value = value.strip()
-        if '[' not in value or ']' not in value:
+        connection_parts = value.strip().split(' ', 1)
+        if len(connection_parts) not in (1, 2):
             raise errors.FormatError(line)
-
-        dash_part = value[:value.index('[')].strip()
-        meta_part = value[value.index('[') + 1:value.index(']')]
-
-        if '-' not in dash_part:
+        if connection_parts[0].count('-') != 1:
             raise errors.FormatError(line)
-        hub1, hub2 = dash_part.split('-')
-
+        hub1, hub2 = connection_parts[0].strip().split('-')
+        # we should check that the hubs exist
         if hub1 not in self.configs['hubs'] or hub2 not in self.configs['hubs']:
-            raise errors.ConnectionTypeError(line)
+            raise errors.HubTypeError(line)
+        # we should check that the connection doesn't already exist
+        for conn in self.configs['hubs'][hub1]['connection']:
+            if conn['target'] == hub2:
+                raise errors.DuplicateError(
+                    f'Connection between {hub1} and {hub2} already exists.'
+                )
+        if len(connection_parts) == 2:
+            metadata = self.extract_bracket_content(connection_parts[1].strip(), line)
+            if '=' not in metadata:
+                raise errors.MetaDataTypeError(line)
+            key, value = metadata.split('=', 1)
+            if key != 'max_link_capacity':
+                raise errors.MetaDataTypeError(line)
+            if not value.isdigit() or int(value) <= 0:
+                raise errors.MetaDataTypeError(line)
+            metadata_dict = {'max_link_capacity': int(value)}
+        else:
+            metadata_dict = {'max_link_capacity': None}
 
-        if hub2 in self.configs['hubs'][hub1]['connection']:
-            raise errors.DuplicateConnectionError(line)
-
-        name, capacity = meta_part.split('=')
-        if name != 'max_link_capacity' or not capacity.isdigit() or int(capacity) <= 0:
-            raise errors.FormatError(line)
-
-        self.configs['hubs'][hub1]['connection'].add(hub2)
-        self.configs['hubs'][hub2]['connection'].add(hub1)
-
-    def find_name(self, part: str):
-        name_found = False
-        for character in part:
-            if character == ' ' and not name_found:
-                continue
-            elif character != ' ':
-                print(character, end = '')
-                if not name_found:
-                    name_start = part.index(character)
-                name_found = True
-            elif character == ' ' and name_found:
-                name_end = part.index(character)
-                return (name_start, name_end)
-        raise errors.NameTypeError(part)
+        self.configs['hubs'][hub1]['connection'].append({
+            'target': hub2,
+            'max_link_capacity': metadata_dict['max_link_capacity'],
+        })
+        self.configs['hubs'][hub2]['connection'].append({
+            'target': hub1,
+            'max_link_capacity': metadata_dict['max_link_capacity'],
+        })
 
     def validate_hub(self, line: str) -> None:
         """Validate a hub line and store it in configs."""
         parts = self.validate_line(line)
         hub_type = parts[0].strip()
         self.test_zone(hub_type, line)
-        print(f'hubtype = {hub_type}')
-        name_start, name_ends = self.find_name(parts[1])
-        data = parts[1].strip()
-        name = data[name_start:name_ends]
-        print(f'\nname = {name}')
+        data = parts[1].strip(' ').split(' ', 3)
+        if not len(data) in (3, 4):
+            raise errors.HubFormat(line)
+        name = data[0].strip()
         self.test_name(name)
 
-        rest = parts[1][name_ends:]
-        if '[' not in rest or ']' not in rest:
-            raise errors.MetaDataTypeError(line)
-        start = rest.index('[')
-        close = rest.index(']')
-        if start > close:
-            raise errors.MetaDataTypeError(line)
-        coords = rest[name_ends:start]
-        metadata = rest[start + 1:close]
-        coords.strip()
-        x, y = coords.split(' ')
+        x = data[1].strip()
+        y = data[2].strip()
         self.test_coords(x, y, line)
-
-        metadata_parts = metadata.split()
-        md = self.test_metadata(metadata_parts, line)
+        if len(data) == 4:
+            metadata = data[3].strip()
+            md = self.test_metadata(metadata, line)
+        else:
+            md = {}
 
         self.configs['hubs'][name] = {
             'type': hub_type,
             'x': x,
             'y': y,
             'meta_data': md,
-            'connection': set()
+            'connection': []
         }
 
-    def test_metadata(self, metadata: List, line: str) -> dict:
+    def test_metadata(self, metadata: str, line: str) -> dict:
         """Checks that metadata is valid."""
-        if len(metadata) != 3:
+        metadata = metadata.strip()
+        # should check that it is only one [ and last one only one ]
+        if not metadata.startswith('[') or not metadata.endswith(']'):
             raise errors.MetaDataTypeError(line)
-        for part in metadata:
+        metadata = metadata.strip('[]')
+        metadata_parts = metadata.split()
+        if len(metadata_parts) > 3:
+            raise errors.MetaDataTypeError(line)
+        for part in metadata_parts:
             if '=' not in part:
                 raise errors.MetaDataTypeError(line)
 
         seen = set()
-        for part in metadata:
+        for part in metadata_parts:
             key, value = part.split('=')
             if key in seen:
                 raise errors.MetaDataTypeError(line)
@@ -149,7 +146,7 @@ class GraphParser:
                     raise errors.MetaDataTypeError(line)
             else:
                 raise errors.MetaDataTypeError(line)
-        return {part.split('=')[0]: part.split('=')[1] for part in metadata}
+        return {part.split('=')[0]: part.split('=')[1] for part in metadata_parts}
 
     def test_coords(self, x: str, y: str, line: str) -> None:
         """Checks that coords are valid integers and unique."""
@@ -203,7 +200,8 @@ class GraphParser:
 
     def validate_line(self, line: str) -> List[str]:
         """Split a line into key and value and validate the format."""
-        print(line)
+        if line.endswith('\n'):
+            line = line[:-1]
         to_test = line.split(':')
         if len(to_test) != 2:
             raise errors.FormatError(line)
