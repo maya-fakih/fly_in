@@ -66,7 +66,7 @@ class GraphParser:
                 )
         if len(connection_parts) == 2:
             metadata = self.extract_bracket_content(connection_parts[1].strip(), line)
-            if '=' not in metadata:
+            if '=' not in metadata or metadata.count('=') != 1:
                 raise errors.MetaDataTypeError(line)
             key, value = metadata.split('=', 1)
             if key != 'max_link_capacity':
@@ -116,21 +116,17 @@ class GraphParser:
 
     def test_metadata(self, metadata: str, line: str) -> dict:
         """Checks that metadata is valid."""
-        metadata = metadata.strip()
-        # should check that it is only one [ and last one only one ]
-        if not metadata.startswith('[') or not metadata.endswith(']'):
-            raise errors.MetaDataTypeError(line)
-        metadata = metadata.strip('[]')
+        metadata = self.extract_bracket_content(metadata.strip(), line)
         metadata_parts = metadata.split()
         if len(metadata_parts) > 3:
             raise errors.MetaDataTypeError(line)
         for part in metadata_parts:
-            if '=' not in part:
+            if '=' not in part or part.count('=') != 1:
                 raise errors.MetaDataTypeError(line)
 
         seen = set()
         for part in metadata_parts:
-            key, value = part.split('=')
+            key, value = part.split('=', 1)
             if key in seen:
                 raise errors.MetaDataTypeError(line)
             seen.add(key)
@@ -147,6 +143,14 @@ class GraphParser:
             else:
                 raise errors.MetaDataTypeError(line)
         return {part.split('=')[0]: part.split('=')[1] for part in metadata_parts}
+
+    def extract_bracket_content(self, value: str, line: str) -> str:
+        """Return the inner content when exactly one pair of brackets is present."""
+        if not value.startswith('[') or not value.endswith(']'):
+            raise errors.MetaDataTypeError(line)
+        if value.count('[') != 1 or value.count(']') != 1:
+            raise errors.MetaDataTypeError(line)
+        return value[1:-1].strip()
 
     def test_coords(self, x: str, y: str, line: str) -> None:
         """Checks that coords are valid integers and unique."""
