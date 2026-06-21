@@ -2,10 +2,12 @@
 
 from typing import Any, Dict, List, Sequence
 
-from . import parsing_errors as errors
+from PIL.ImageColor import getrgb
 
 import arcade
-from PIL.ImageColor import getrgb
+
+from math import inf
+from . import parsing_errors as errors
 
 
 class GraphParser:
@@ -67,7 +69,8 @@ class GraphParser:
                     f'Connection between {hub1} and {hub2} already exists.'
                 )
         if len(connection_parts) == 2:
-            metadata = self.extract_bracket_content(connection_parts[1].strip(), line)
+            conn = connection_parts[1]
+            metadata = self.extract_bracket_content(conn.strip(), line)
             if '=' not in metadata or metadata.count('=') != 1:
                 raise errors.MetaDataTypeError(line)
             key, value = metadata.split('=', 1)
@@ -77,7 +80,7 @@ class GraphParser:
                 raise errors.MetaDataTypeError(line)
             metadata_dict = {'max_link_capacity': int(value)}
         else:
-            metadata_dict = {'max_link_capacity': None}
+            metadata_dict = {'max_link_capacity': self.configs['nb_drones']}
 
         self.configs['hubs'][hub1]['connection'].append({
             'target': hub2,
@@ -143,7 +146,8 @@ class GraphParser:
                     raise errors.MetaDataTypeError(line)
                 max_drones = value
             elif key == 'zone':
-                valid_zone_types = ('normal', 'blocked', 'restricted', 'priority')
+                valid_zone_types = ('normal', 'blocked',
+                                    'restricted', 'priority')
                 if value not in valid_zone_types:
                     raise errors.MetaDataTypeError(line)
                 zone = value
@@ -151,8 +155,8 @@ class GraphParser:
                 raise errors.MetaDataTypeError(line)
         return {'color': color, 'max_drones': max_drones, 'zone': zone}
 
-    def validate_color(self, color: str, line: str) -> None:
-        """Checks that color is a valid string and exists in arcade library."""
+    def validate_color(self, color: str, line: str) -> Any:
+        """Correct doc string."""
         if not isinstance(color, str) or not color:
             raise errors.MetaDataTypeError(line)
         raw = color.strip()
@@ -168,7 +172,7 @@ class GraphParser:
             raise errors.ColorFormat(line)
 
     def extract_bracket_content(self, value: str, line: str) -> str:
-        """Return the inner content when exactly one pair of brackets is present."""
+        """Return the inner content when exactly one pair of brackets."""
         if not value.startswith('[') or not value.endswith(']'):
             raise errors.MetaDataTypeError(line)
         if value.count('[') != 1 or value.count(']') != 1:
@@ -181,10 +185,10 @@ class GraphParser:
             int(x)
             int(y)
         except ValueError:
-            raise errors.CoordinatesTypeError(line)
+            raise errors.CoordsDuplicateError(line)
         for hub in self.configs['hubs'].values():
             if hub['x'] == x and hub['y'] == y:
-                raise errors.CoordinatesDuplicateError(line)
+                raise errors.CoordsDuplicateError(line)
 
     def test_zone(self, zone: str, line: str) -> None:
         """Checks valid zone type and no duplicate start/end hubs."""

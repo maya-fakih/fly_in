@@ -1,7 +1,8 @@
 """Parsing package exports."""
 
+from .parser import GraphParser
 from .parsing_errors import (
-    CoordinatesTypeError,
+    CoordsDuplicateError,
     DroneNumberError,
     FormatError,
     HubFormat,
@@ -13,10 +14,10 @@ from .parsing_errors import (
     TypesError,
 )
 
-from .parser import GraphParser
+_ = GraphParser
 
 __all__ = [
-    'CoordinatesTypeError',
+    'CoordsDuplicateError',
     'DroneNumberError',
     'FormatError',
     'HubFormat',

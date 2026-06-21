@@ -155,7 +155,7 @@ class NameDuplicateError(DuplicateError):
         super().__init__(msg)
 
 
-class CoordinatesTypeError(DuplicateError):
+class CoordsDuplicateError(DuplicateError):
     """Raised when the hub has duplicate coords or the line is malformed."""
 
     def __init__(self, line: Optional[object] = None) -> None:
