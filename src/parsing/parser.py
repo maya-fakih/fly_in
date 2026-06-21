@@ -1,9 +1,11 @@
 """Graph configuration parser and validation logic."""
 
-from copy import error
 from typing import Any, Dict, List, Sequence
 
 from . import parsing_errors as errors
+
+import arcade
+from PIL.ImageColor import getrgb
 
 
 class GraphParser:
@@ -43,7 +45,6 @@ class GraphParser:
                         self.validate_connection(line)
             self.parsing_safe = True
         except Exception as exc:
-            print('[Parsing]: Error!')
             print(exc)
 
     def validate_connection(self, line: str) -> None:
@@ -56,7 +57,8 @@ class GraphParser:
             raise errors.FormatError(line)
         hub1, hub2 = connection_parts[0].strip().split('-')
         # we should check that the hubs exist
-        if hub1 not in self.configs['hubs'] or hub2 not in self.configs['hubs']:
+        poss = self.configs['hubs']
+        if hub1 not in poss or hub2 not in poss:
             raise errors.ConnectionTypeError(line)
         # we should check that the connection doesn't already exist
         for conn in self.configs['hubs'][hub1]['connection']:
@@ -123,7 +125,9 @@ class GraphParser:
         for part in metadata_parts:
             if '=' not in part or part.count('=') != 1:
                 raise errors.MetaDataTypeError(line)
-
+        color = None
+        max_drones = None
+        zone = None
         seen = set()
         for part in metadata_parts:
             key, value = part.split('=', 1)
@@ -133,16 +137,35 @@ class GraphParser:
             if key == 'color':
                 if not isinstance(value, str) or not value:
                     raise errors.MetaDataTypeError(line)
+                color = self.validate_color(value, line)
             elif key == 'max_drones':
                 if not value.isdigit() or int(value) <= 0:
                     raise errors.MetaDataTypeError(line)
+                max_drones = value
             elif key == 'zone':
                 valid_zone_types = ('normal', 'blocked', 'restricted', 'priority')
                 if value not in valid_zone_types:
                     raise errors.MetaDataTypeError(line)
+                zone = value
             else:
                 raise errors.MetaDataTypeError(line)
-        return {part.split('=')[0]: part.split('=')[1] for part in metadata_parts}
+        return {'color': color, 'max_drones': max_drones, 'zone': zone}
+
+    def validate_color(self, color: str, line: str) -> None:
+        """Checks that color is a valid string and exists in arcade library."""
+        if not isinstance(color, str) or not color:
+            raise errors.MetaDataTypeError(line)
+        raw = color.strip()
+        if color == 'rainbow':
+            return ('rainbow')
+        try:
+            rgb = getrgb(raw)
+            return rgb
+        except Exception:
+            color_format = raw.replace(' ', '_').replace('-', '_').upper()
+            if hasattr(arcade.color, color_format):
+                return getattr(arcade.color, color_format)
+            raise errors.ColorFormat(line)
 
     def extract_bracket_content(self, value: str, line: str) -> str:
         """Return the inner content when exactly one pair of brackets is present."""
@@ -215,8 +238,3 @@ class GraphParser:
         if to_test[0].strip() not in valid_keys:
             raise errors.FormatError(line)
         return to_test
-
-    @staticmethod
-    def is_int(val: object) -> bool:
-        """Return True if `val` is an int but not a bool."""
-        return isinstance(val, int) and not isinstance(val, bool)
