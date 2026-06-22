@@ -19,4 +19,4 @@ class Hub:
     max_drones: int
     hub_type: HubType
     # connections to other hubs (names or identifiers)
-    connections: List[str] = field(default_factory=list)
+    connections: List = field(default_factory=list)

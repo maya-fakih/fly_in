@@ -10,3 +10,13 @@ class Simulation:
         """Initialize the simulation with a map configuration path."""
         self.config_map = map_config
         self.parser = GraphParser(self.config_map)
+        self.ok = False
+        
+    def start(self):
+        self.parser.load()
+        if self.parser.parsing_safe:
+            print('Parsing successful.')
+            self.ok = True
+        else:
+            print('Parsing failed.')
+

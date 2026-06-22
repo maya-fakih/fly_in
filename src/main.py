@@ -16,7 +16,6 @@ def check_input_arguments():
         print('Usage: python main.py <configuration_file>')
         sys.exit(1)
 
-
 def main():
     """Entry point for the application.
 
@@ -24,12 +23,8 @@ def main():
     """
     check_input_arguments()
     config_file = sys.argv[1]
-    parser = GraphParser(config_file)
-    parser.load_file()
-    if parser.parsing_safe:
-        print('Parsing successful.')
-    else:
-        print('Parsing failed.')
+    sim = Simulation(config_file)
+    sim.start()
 
 
 if __name__ == '__main__':
