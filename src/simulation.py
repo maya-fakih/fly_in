@@ -20,13 +20,32 @@ class Simulation:
         if self.parser.parsing_safe:
             print('Parsing successful.')
             self.create_map()
+            self.set_costs()
             self.print_map()
         else:
             print('Parsing failed.')
 
+    def get_neighbors(self, hub: Hub):
+        connections = hub.connections
+        targets = {hub['target'] for hub in connections}
+        neighbors = {hub for hub in self.map if hub.name in targets}
+        return neighbors
+
     def set_costs(self):
-        start_hub = next((hub for hub in self.map if hub.hub_type == 'start_hub'), None)
-        end_hub = next((hub for hub in self.map if hub.hub_type == 'edn_hub'), None)
+        """Uses reverse Djxstra algorithm to set costs for all hubs in map."""
+        end_hub = next((hub for hub in self.map if hub.hub_type == 'end_hub'), None)
+        next_level = list(self.get_neighbors(end_hub))
+        cost = 1
+        for i in range(len(next_level)):
+            hub = next_level[i]
+            hub.cost = cost
+            if i == len(next_level) -1:
+                n = []
+                while next_level:
+                    current = next_level.pop()
+                    n.append(self.get_neighbors(current))
+                cost +=1
+                next_level.append(n)
 
     def create_map(self):
         configs = self.parser.configs
@@ -39,5 +58,3 @@ class Simulation:
     def print_map(self):
         for hub in self.map:
             hub.show_hub()
-
-

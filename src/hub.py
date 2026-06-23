@@ -17,7 +17,7 @@ class Hub:
         self.max_drones = data['meta_data']['max_drones']
         self.current_drones = 0
         self.capacity = self.max_drones - self.current_drones
-        self.cost_end = inf
+        self.cost = inf
         self.huristic = 0
         self.hub_type = data['type']
         # connections to other hubs (names or identifiers)
@@ -30,10 +30,10 @@ class Hub:
         print(f'x={self.x}, y={self.y}, color={self.color},'
                 f'zone={self.zone}, max_drones={self.max_drones},'
                 f'current_drones={self.current_drones},'
-                f'capacity={self.capacity}, cost_end={self.cost_end}'
-                f'huristic={self.huristic}, hub_type={self.hub_type}')
+                f'capacity={self.capacity}, cost_end={self.cost}'
+                f'huristic={self.huristic}, hub_type={self.hub_type}'
+                f'connections={self.connections}')
+
     def estimate(self, connction):
         cost = self.zone
 
-    def get_neibors(self):
-        return (self.connections)
