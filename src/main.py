@@ -2,7 +2,7 @@
 
 import sys
 
-from parsing import GraphParser
+from simulation import Simulation
 
 
 def check_input_arguments():

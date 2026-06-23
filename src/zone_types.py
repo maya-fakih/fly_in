@@ -2,6 +2,7 @@
 
 from enum import Enum
 
+from math import inf
 
 class Zones(Enum):
     """Zone types and traversal costs.
@@ -15,4 +16,4 @@ class Zones(Enum):
     normal = 1
     restricted = 2
     priority = 1
-    blocked = 0
+    blocked = inf

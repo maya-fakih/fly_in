@@ -1,22 +1,39 @@
 """Hub file for hub representation."""
-from dataclasses import dataclass, field
-from typing import List
+from math import inf
 
 from hub_type import HubType
 
 from zone_types import Zones
 
 
-@dataclass
 class Hub:
     """Dataclass to represent a hub."""
+    def __init__(self, name: str, data):
+        self.name = name
+        self.x = data['x']
+        self.y = data['y']
+        self.zone: Zones = data['meta_data']['zone']
+        self.color = data['meta_data']['color']
+        self.max_drones = data['meta_data']['max_drones']
+        self.current_drones = 0
+        self.capacity = self.max_drones - self.current_drones
+        self.cost_end = inf
+        self.huristic = 0
+        self.hub_type = data['type']
+        # connections to other hubs (names or identifiers)
+        # 'connection': [{'target': 'waypoint1', 'max_link_capacity': 2},
+        #                {'target': 'goal', 'max_link_capacity': 2}]}
+        self.connections = data['connection']
 
-    name: str
-    x: int
-    y: int
-    zone: Zones
-    color: str
-    max_drones: int
-    hub_type: HubType
-    # connections to other hubs (names or identifiers)
-    connections: List = field(default_factory=list)
+    def show_hub(self):
+        print(f'{self.name}:')
+        print(f'x={self.x}, y={self.y}, color={self.color},'
+                f'zone={self.zone}, max_drones={self.max_drones},'
+                f'current_drones={self.current_drones},'
+                f'capacity={self.capacity}, cost_end={self.cost_end}'
+                f'huristic={self.huristic}, hub_type={self.hub_type}')
+    def estimate(self, connction):
+        cost = self.zone
+
+    def get_neibors(self):
+        return (self.connections)

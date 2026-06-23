@@ -26,6 +26,8 @@ class GraphParser:
         }
         self.parsing_safe = False
         self.hub_state = 1
+        self.start_found = False
+        self.end_found = False
 
     def load_file(self) -> None:
         """Load and parse the configuration file line by line."""
@@ -45,6 +47,8 @@ class GraphParser:
                         self.validate_hub(line)
                     elif key == 'connection':
                         self.validate_connection(line)
+            if not self.start_found or not self.end_found:
+                raise errors.HubFormat('There is no start or end hub!')
             self.parsing_safe = True
         except Exception as exc:
             print(exc)
@@ -58,11 +62,9 @@ class GraphParser:
         if connection_parts[0].count('-') != 1:
             raise errors.FormatError(line)
         hub1, hub2 = connection_parts[0].strip().split('-')
-        # we should check that the hubs exist
         poss = self.configs['hubs']
         if hub1 not in poss or hub2 not in poss:
             raise errors.ConnectionTypeError(line)
-        # we should check that the connection doesn't already exist
         for conn in self.configs['hubs'][hub1]['connection']:
             if conn['target'] == hub2:
                 raise errors.DuplicateError(
@@ -109,7 +111,8 @@ class GraphParser:
             metadata = data[3].strip()
             md = self.test_metadata(metadata, line)
         else:
-            md = {}
+            md = {'color': self.validate_color('GREY', line),
+                  'max_drones': inf, 'zone': 'normal'}
 
         self.configs['hubs'][name] = {
             'type': hub_type,
@@ -129,8 +132,8 @@ class GraphParser:
             if '=' not in part or part.count('=') != 1:
                 raise errors.MetaDataTypeError(line)
         color = None
-        max_drones = None
-        zone = None
+        max_drones = inf
+        zone = 'normal'
         seen = set()
         for part in metadata_parts:
             key, value = part.split('=', 1)
@@ -153,6 +156,8 @@ class GraphParser:
                 zone = value
             else:
                 raise errors.MetaDataTypeError(line)
+        if color == None:
+            color = self.validate_color('grey', line)
         return {'color': color, 'max_drones': max_drones, 'zone': zone}
 
     def validate_color(self, color: str, line: str) -> Any:
@@ -200,6 +205,10 @@ class GraphParser:
                 hub['type'] for hub in self.configs['hubs'].values()
                 if isinstance(hub, dict) and 'type' in hub
             ]
+            if zone == 'start_hub':
+                self.start_found = True
+            if zone == 'end_hub':
+                self.end_found = True
             if zone in existing_types:
                 raise errors.DuplicateZone(line)
 
