@@ -32,20 +32,29 @@ class Simulation:
         return neighbors
 
     def set_costs(self):
-        """Uses reverse Djxstra algorithm to set costs for all hubs in map."""
+        """Uses reverse Dijkstra algorithm to set costs for all hubs in map."""
         end_hub = next((hub for hub in self.map if hub.hub_type == 'end_hub'), None)
-        next_level = list(self.get_neighbors(end_hub))
+        if not end_hub:
+            return
+        # this will never happen but for safety and proper alg ^
+        end_hub.cost = 0
+        visited = {end_hub}
+        current_level = list(self.get_neighbors(end_hub))
         cost = 1
-        for i in range(len(next_level)):
-            hub = next_level[i]
-            hub.cost = cost
-            if i == len(next_level) -1:
-                n = []
-                while next_level:
-                    current = next_level.pop()
-                    n.append(self.get_neighbors(current))
-                cost +=1
-                next_level.append(n)
+
+        while current_level:
+            for hub in current_level:
+                if hub not in visited:
+                    hub.cost = cost
+                    visited.add(hub)
+
+            next_level = set()
+            for hub in current_level:
+                neighbors = self.get_neighbors(hub)
+                next_level.update(neighbors - visited)
+            
+            current_level = list(next_level)
+            cost += 1
 
     def create_map(self):
         configs = self.parser.configs
