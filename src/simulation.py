@@ -32,7 +32,7 @@ class Simulation:
         return neighbors
 
     def set_costs(self):
-        """Uses reverse Dijkstra algorithm to set costs for all hubs in map."""
+        """Uses reverse BFS algorithm to set costs for all hubs in map."""
         end_hub = next((hub for hub in self.map if hub.hub_type == 'end_hub'), None)
         if not end_hub:
             return
