@@ -1,6 +1,7 @@
 """Simulation module that wires together the map parser and simulation."""
 
 from typing import Dict
+from math import inf
 from parsing.parser import GraphParser
 from hub import Hub
 
@@ -12,8 +13,7 @@ class Simulation:
         self.config_map = map_config
         self.parser = GraphParser(self.config_map)
         self.nb_drones = 0
-        self.map = []
-        self.ok = False
+        self.map = {}
 
     def start(self):
         self.parser.load_file()
@@ -21,22 +21,22 @@ class Simulation:
             print('Parsing successful.')
             self.create_map()
             self.set_costs()
+            self.set_heuristics()
             self.print_map()
         else:
             print('Parsing failed.')
 
     def get_neighbors(self, hub: Hub):
-        connections = hub.connections
-        targets = {hub['target'] for hub in connections}
-        neighbors = {hub for hub in self.map if hub.name in targets}
-        return neighbors
+        return {
+            self.map[conn['target']]
+            for conn in hub.connections
+            if self.map[conn['target']].zone.value != inf
+        }
 
     def set_costs(self):
-        """Uses reverse BFS algorithm to set costs for all hubs in map."""
-        end_hub = next((hub for hub in self.map if hub.hub_type == 'end_hub'), None)
+        end_hub = next((hub for hub in self.map.values() if hub.hub_type == 'end_hub'), None)
         if not end_hub:
             return
-        # this will never happen but for safety and proper alg ^
         end_hub.cost = 0
         visited = {end_hub}
         current_level = list(self.get_neighbors(end_hub))
@@ -45,25 +45,36 @@ class Simulation:
         while current_level:
             for hub in current_level:
                 if hub not in visited:
-                    hub.cost = cost * hub.zone.value
+                    if hub.zone.value != inf:
+                        hub.cost = cost + hub.zone.value -1
                     visited.add(hub)
 
             next_level = set()
             for hub in current_level:
-                neighbors = self.get_neighbors(hub)
-                next_level.update(neighbors - visited)
+                next_level.update(self.get_neighbors(hub) - visited)
             
             current_level = list(next_level)
             cost += 1
 
+    def set_heuristics(self):
+        from math import sqrt
+        end_hub = next((hub for hub in self.map.values() if hub.hub_type == 'end_hub'), None)
+        if not end_hub:
+            return
+        for hub in self.map.values():
+            if hub.cost == inf:
+                hub.heuristic = inf
+            else:
+                dx = hub.x - end_hub.x
+                dy = hub.y - end_hub.y
+                hub.heuristic = int(sqrt(dx * dx + dy * dy))
+
+    def print_map(self):
+        for hub in self.map.values():
+            hub.show_hub()
+        
     def create_map(self):
         configs = self.parser.configs
         self.nb_drones = configs['nb_drones']
-        print(self.nb_drones)
-        hubs = configs['hubs']
-        for name, data in hubs.items():
-            self.map.append(Hub(name, data))
-        
-    def print_map(self):
-        for hub in self.map:
-            hub.show_hub()
+        for name, data in configs['hubs'].items():
+            self.map[name] = Hub(name, data)
