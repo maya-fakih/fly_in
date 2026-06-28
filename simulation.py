@@ -4,7 +4,6 @@ from typing import Dict
 from math import inf
 from parser import GraphParser
 from hub import Hub
-from drone import Drone
 
 class Simulation:
     """Run a simulation based on a map configuration file."""
@@ -17,7 +16,9 @@ class Simulation:
         self.map = {}
         self.start()
 
+
     def run(self):
+        from drone import Drone
         goal = next(hub for hub in self.map.values() if hub.hub_type == 'end_hub')
         self.drones = [Drone(goal) for _ in range(self.nb_drones)]
         for drone in self.drones:
@@ -27,12 +28,30 @@ class Simulation:
             for drone in self.drones:
                 drone.tick(self)
 
-    def move(self, drone: Drone, next_hub: Hub):
+    def move(self, drone, next_hub: Hub):
         if drone.current_hub:
             drone.current_hub.current_drones -= 1
         next_hub.current_drones += 1
-        drone.current_hub = next_hub
-        drone.waiting_turn = next_hub.zone.value
+        drone.current_hub = next_hub    
+
+    def leave(self, drone, next_hub):
+        if drone.current_hub:
+            drone.current_hub.current_drones -= 1
+        c = drone.current_hub
+        c.connections[next_hub.name]['current_link_drones'] += 1
+        next_hub.connections[c.name]['current_link_drones'] += 1
+        drone.in_transit_to = next_hub
+
+    def arrive(self, drone):
+        drone.current_hub.connections[drone.in_transit_to.name]['current_link_drones'] -= 1
+        drone.in_transit_to.connections[drone.current_hub.name]['current_link_drones'] -= 1
+        drone.in_transit_to.current_drones += 1
+        drone.current_hub = drone.in_transit_to
+        drone.in_transit_to = None
+
+    def update_edge(self, from_hub, to_hub):
+        from_hub.connections[to_hub.name]['current_link_drones'] += 1
+        to_hub.connections[from_hub.name]['current_link_drones'] += 1
 
     def start(self):
         self.parser.load_file()
@@ -47,9 +66,9 @@ class Simulation:
 
     def get_neighbors(self, hub: Hub):
         return {
-            self.map[conn['target']]
-            for conn in hub.connections
-            if self.map[conn['target']].zone.value != inf
+            self.map[target]
+            for target in hub.connections
+            if self.map[target].zone.value != inf
         }
 
     def set_costs(self):

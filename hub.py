@@ -23,7 +23,13 @@ class Hub:
         # connections to other hubs (names or identifiers)
         # 'connection': [{'target': 'waypoint1', 'max_link_capacity': 2},
         #                {'target': 'goal', 'max_link_capacity': 2}]}
-        self.connections = data['connection']
+        self.connections = {
+            conn['target']: {
+                'max_link_capacity': conn['max_link_capacity'],
+                'current_link_drones': 0
+            }
+            for conn in data['connection']
+        }
 
     @property
     def traffic(self):
