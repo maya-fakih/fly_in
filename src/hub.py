@@ -12,7 +12,8 @@ class Hub:
         self.name = name
         self.x = data['x']
         self.y = data['y']
-        self.zone: Zones = data['meta_data']['zone']
+        zone = data['meta_data']['zone']
+        self.zone: Zones = zone if isinstance(zone, Zones) else Zones[zone]
         self.color = data['meta_data']['color']
         self.max_drones = data['meta_data']['max_drones']
         self.current_drones = 0

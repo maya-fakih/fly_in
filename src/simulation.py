@@ -45,7 +45,7 @@ class Simulation:
         while current_level:
             for hub in current_level:
                 if hub not in visited:
-                    hub.cost = cost
+                    hub.cost = cost * hub.zone.value
                     visited.add(hub)
 
             next_level = set()

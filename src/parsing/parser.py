@@ -8,6 +8,7 @@ import arcade
 
 from math import inf
 from . import parsing_errors as errors
+from zone_types import Zones
 
 
 class GraphParser:
@@ -133,7 +134,7 @@ class GraphParser:
                 raise errors.MetaDataTypeError(line)
         color = None
         max_drones = inf
-        zone = 'normal'
+        zone = Zones.normal
         seen = set()
         for part in metadata_parts:
             key, value = part.split('=', 1)
@@ -147,13 +148,12 @@ class GraphParser:
             elif key == 'max_drones':
                 if not value.isdigit() or int(value) <= 0:
                     raise errors.MetaDataTypeError(line)
-                max_drones = value
+                max_drones = int(value)
             elif key == 'zone':
-                valid_zone_types = ('normal', 'blocked',
-                                    'restricted', 'priority')
-                if value not in valid_zone_types:
+                try:
+                    zone = Zones[value]
+                except KeyError:
                     raise errors.MetaDataTypeError(line)
-                zone = value
             else:
                 raise errors.MetaDataTypeError(line)
         if color == None:
