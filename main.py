@@ -24,6 +24,7 @@ def main():
     check_input_arguments()
     config_file = sys.argv[1]
     sim = Simulation(config_file)
+    sim.run()
 
 
 if __name__ == '__main__':

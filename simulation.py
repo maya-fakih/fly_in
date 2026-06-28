@@ -24,10 +24,14 @@ class Simulation:
         self.drones = [Drone(goal) for _ in range(self.nb_drones)]
         for drone in self.drones:
             self.move(drone, start)
-
+        turn = 0
         while not all(d.reached_goal for d in self.drones):
+            turn += 1
             for drone in self.drones:
                 drone.tick(self)
+            print('-------------------------------')
+            self.print_state(turn)
+        print('all drones reached end sucsessfully')
 
     def move(self, drone, next_hub: Hub):
         if drone.current_hub:
@@ -50,10 +54,6 @@ class Simulation:
         drone.current_hub = drone.in_transit_to
         drone.in_transit_to = None
 
-    def update_edge(self, from_hub, to_hub):
-        from_hub.connections[to_hub.name]['current_link_drones'] += 1
-        to_hub.connections[from_hub.name]['current_link_drones'] += 1
-
     def start(self):
         self.parser.load_file()
         if self.parser.parsing_safe:
@@ -61,7 +61,6 @@ class Simulation:
             self.create_map()
             self.set_costs()
             self.set_heuristics()
-            self.print_map()
         else:
             print('Parsing failed.')
 
@@ -109,10 +108,15 @@ class Simulation:
                 dy = hub.y - end_hub.y
                 hub.heuristic = int(sqrt(dx * dx + dy * dy))
 
-    def print_map(self):
+    def print_state(self, turn):
+        print(f'\n--- Turn {turn} ---')
         for hub in self.map.values():
-            hub.show_hub()
-        
+            if hub.current_drones > 0 or any(
+                c['current_link_drones'] > 0 
+                for c in hub.connections.values()
+            ):
+                hub.show_hub()
+     
     def create_map(self):
         configs = self.parser.configs
         self.nb_drones = configs['nb_drones']

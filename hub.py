@@ -46,6 +46,12 @@ class Hub:
         return self.cost + self.heuristic + self.traffic
 
     def show_hub(self):
-        print(f'{self.name}:')
-        print(f'capacity={self.capacity}, cost_end={self.cost} '
-                f'huristic={self.heuristic}')
+        status = f'[{self.current_drones}/{self.max_drones}]'
+        transit = ''
+        in_transit = [
+            target for target, conn in self.connections.items()
+            if conn['current_link_drones'] > 0
+        ]
+        if in_transit:
+            transit = f' → in transit: {", ".join(in_transit)}'
+        print(f'{self.name} {status} cost={self.cost} h={self.heuristic}{transit}')
