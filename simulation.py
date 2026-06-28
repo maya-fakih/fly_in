@@ -4,6 +4,7 @@ from typing import Dict
 from math import inf
 from parser import GraphParser
 from hub import Hub
+from drone import Drone
 
 class Simulation:
     """Run a simulation based on a map configuration file."""
@@ -14,6 +15,24 @@ class Simulation:
         self.parser = GraphParser(self.config_map)
         self.nb_drones = 0
         self.map = {}
+        self.start()
+
+    def run(self):
+        goal = next(hub for hub in self.map.values() if hub.hub_type == 'end_hub')
+        self.drones = [Drone(goal) for _ in range(self.nb_drones)]
+        for drone in self.drones:
+            self.move(drone, self.map['start'])
+
+        while not all(d.reached_goal for d in self.drones):
+            for drone in self.drones:
+                drone.tick(self)
+
+    def move(self, drone: Drone, next_hub: Hub):
+        if drone.current_hub:
+            drone.current_hub.current_drones -= 1
+        next_hub.current_drones += 1
+        drone.current_hub = next_hub
+        drone.waiting_turn = next_hub.zone.value
 
     def start(self):
         self.parser.load_file()
