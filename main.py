@@ -24,6 +24,8 @@ def main():
     check_input_arguments()
     config_file = sys.argv[1]
     sim = Simulation(config_file)
+    if not sim.parser.parsing_safe:
+        return
     sim.run()
 
 

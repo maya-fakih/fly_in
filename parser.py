@@ -50,9 +50,19 @@ class GraphParser:
                         self.validate_connection(line)
             if not self.start_found or not self.end_found:
                 raise errors.HubFormat('There is no start or end hub!')
+            self.check_start_end_capacity()
             self.parsing_safe = True
         except Exception as exc:
             print(exc)
+
+    def check_start_end_capacity(self):
+        """Validates that start and end hubs have no capacity limit."""
+        for name, hub in self.configs['hubs'].items():
+            if hub['type'] in ('start_hub', 'end_hub'):
+                if hub['meta_data']['max_drones'] < self.configs['nb_drones']:
+                    raise errors.MetaDataTypeError(
+                        f'{name} cannot have a capacity limit'
+                    )
 
     def validate_connection(self, line: str) -> None:
         """Validate a connection line and add it to both hubs."""
