@@ -19,10 +19,11 @@ class Simulation:
 
     def run(self):
         from drone import Drone
-        goal = next(hub for hub in self.map.values() if hub.hub_type == 'end_hub')
+        start = next(h for h in self.map.values() if h.hub_type == 'start_hub')
+        goal = next(h for h in self.map.values() if h.hub_type == 'end_hub')
         self.drones = [Drone(goal) for _ in range(self.nb_drones)]
         for drone in self.drones:
-            self.move(drone, self.map['start'])
+            self.move(drone, start)
 
         while not all(d.reached_goal for d in self.drones):
             for drone in self.drones:
