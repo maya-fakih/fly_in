@@ -38,6 +38,7 @@ class Hub:
     @property
     def estimate(self):
         return self.cost + self.heuristic + self.traffic
+
     def show_hub(self):
         print(f'{self.name}:')
         print(f'capacity={self.capacity}, cost_end={self.cost} '

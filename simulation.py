@@ -2,7 +2,7 @@
 
 from typing import Dict
 from math import inf
-from parsing.parser import GraphParser
+from parser import GraphParser
 from hub import Hub
 
 class Simulation:

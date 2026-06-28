@@ -7,7 +7,7 @@ from PIL.ImageColor import getrgb
 import arcade
 
 from math import inf
-from . import parsing_errors as errors
+import parsing_errors as errors
 from zone_types import Zones
 
 
