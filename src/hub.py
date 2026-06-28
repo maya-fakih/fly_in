@@ -17,7 +17,6 @@ class Hub:
         self.color = data['meta_data']['color']
         self.max_drones = data['meta_data']['max_drones']
         self.current_drones = 0
-        self.capacity = self.max_drones - self.current_drones
         self.cost = inf
         self.heuristic = 0
         self.hub_type = data['type']
@@ -26,11 +25,20 @@ class Hub:
         #                {'target': 'goal', 'max_link_capacity': 2}]}
         self.connections = data['connection']
 
+    @property
+    def traffic(self):
+        if self.max_drones == inf:
+            return 0
+        return self.current_drones / self.max_drones
+    
+    @property
+    def capacity(self):
+        return self.max_drones - self.current_drones
+
+    @property
+    def estimate(self):
+        return self.cost + self.heuristic + self.traffic
     def show_hub(self):
         print(f'{self.name}:')
         print(f'capacity={self.capacity}, cost_end={self.cost} '
                 f'huristic={self.heuristic}')
-
-    def estimate(self, connction):
-        cost = self.zone
-

@@ -35,8 +35,7 @@ class Simulation:
 
     def set_costs(self):
         end_hub = next((hub for hub in self.map.values() if hub.hub_type == 'end_hub'), None)
-        if not end_hub:
-            return
+        start_hub = next((hub for hub in self.map.values() if hub.hub_type == 'start_hub'), None)
         end_hub.cost = 0
         visited = {end_hub}
         current_level = list(self.get_neighbors(end_hub))
@@ -48,6 +47,8 @@ class Simulation:
                     if hub.zone.value != inf:
                         hub.cost = cost + hub.zone.value -1
                     visited.add(hub)
+                    if hub == start_hub:
+                        return
 
             next_level = set()
             for hub in current_level:
