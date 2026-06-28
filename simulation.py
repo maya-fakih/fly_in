@@ -36,9 +36,9 @@ class Simulation:
         drone.current_hub = next_hub    
 
     def leave(self, drone, next_hub):
-        if drone.current_hub:
-            drone.current_hub.current_drones -= 1
         c = drone.current_hub
+        if c:
+            c.current_drones -= 1
         c.connections[next_hub.name]['current_link_drones'] += 1
         next_hub.connections[c.name]['current_link_drones'] += 1
         drone.in_transit_to = next_hub
