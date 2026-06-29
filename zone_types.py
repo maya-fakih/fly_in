@@ -15,5 +15,5 @@ class Zones(Enum):
 
     normal = 1
     restricted = 2
-    priority = 1
+    priority = 0.85
     blocked = inf
