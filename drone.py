@@ -35,9 +35,13 @@ class Drone():
     
     def next_move(self, sim: Simulation):
         valid = {n for n in sim.get_neighbors(self.current_hub)
-                if n.cost <= self.current_hub.cost  # <= not 
-                and n.capacity > 0
-                and n.heuristic < self.current_hub.heuristic}  # heuristic breaks ties
+            if (n.cost <= self.current_hub.cost  # <= not 
+            and n.capacity > 0
+            and n.heuristic < self.current_hub.heuristic) or 
+            (n.cost > self.current_hub.cost
+             and n.capacity > 0
+             and n.heuristic < self.current_hub.heuristic)}  # heuristic breaks ties
+
         if not valid:
             return None
         return min(valid, key=lambda n: n.estimate)
