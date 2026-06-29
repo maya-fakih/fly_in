@@ -45,6 +45,10 @@ class Hub:
     def estimate(self):
         return self.cost + self.heuristic + self.traffic
 
+    def link_available(self, neighbor: 'Hub') -> bool:
+        conn = self.connections[neighbor.name]
+        return conn['current_link_drones'] < conn['max_link_capacity']
+
     def show_hub(self):
         status = f'[{self.current_drones}/{self.max_drones}]'
         transit = ''
