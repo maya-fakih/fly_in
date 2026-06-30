@@ -104,7 +104,7 @@ class Simulation:
             return
         for hub in self.map.values():
             if hub.cost == inf:
-                hub.heuristic = int(inf)
+                hub.heuristic = float(inf)
             else:
                 dx = hub.x - end_hub.x
                 dy = hub.y - end_hub.y

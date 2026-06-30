@@ -12,14 +12,16 @@ class Hub:
         self.name = name
         self.x = int(data['x'])
         self.y = int(data['y'])
+        self.hub_type = data['type']
         zone = data['meta_data']['zone']
         self.zone: Zones = zone if isinstance(zone, Zones) else Zones[zone]
         self.color = data['meta_data']['color']
         self.max_drones = data['meta_data']['max_drones']
+        if self.hub_type == 'start_hub' or self.hub_type == 'end_hub':
+            self.max_drones = inf
         self.current_drones = 0
         self.cost = inf
         self.heuristic = inf
-        self.hub_type = data['type']
         # connections to other hubs (names or identifiers)
         # 'connection': [{'target': 'waypoint1', 'max_link_capacity': 2},
         #                {'target': 'goal', 'max_link_capacity': 2}]}
@@ -38,8 +40,8 @@ class Hub:
         return self.current_drones / self.max_drones
 
     @property
-    def capacity(self) -> int:
-        return int(self.max_drones - self.current_drones)
+    def capacity(self) -> float:
+        return float(self.max_drones - self.current_drones)
 
     @property
     def estimate(self) -> float:
