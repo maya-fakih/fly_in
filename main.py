@@ -5,7 +5,7 @@ import sys
 from simulation import Simulation
 
 
-def check_input_arguments():
+def check_input_arguments() -> None:
     """Check if the required input arguments are provided.
 
     This function ensures that the user has provided the necessary command-line
@@ -17,7 +17,7 @@ def check_input_arguments():
         sys.exit(1)
 
 
-def main():
+def main() -> None:
     """Entry point for the application.
 
     This function is currently a placeholder for the main program logic.

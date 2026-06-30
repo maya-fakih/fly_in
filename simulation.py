@@ -1,5 +1,6 @@
 """Simulation module that wires together the map parser and simulation."""
 
+from typing import Any
 from math import inf
 from parser import GraphParser
 from hub import Hub
@@ -13,10 +14,10 @@ class Simulation:
         self.config_map = map_config
         self.parser = GraphParser(self.config_map)
         self.nb_drones = 0
-        self.map = {}
+        self.map: dict[str, Hub] = {}
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         from drone import Drone
         start = next(h for h in self.map.values() if h.hub_type == 'start_hub')
         goal = next(h for h in self.map.values() if h.hub_type == 'end_hub')
@@ -32,13 +33,13 @@ class Simulation:
             self.print_state(turn)
         print('all drones reached end sucsessfully')
 
-    def move(self, drone, next_hub: Hub):
+    def move(self, drone: Any, next_hub: Hub) -> None:
         if drone.current_hub:
             drone.current_hub.current_drones -= 1
         next_hub.current_drones += 1
         drone.current_hub = next_hub
 
-    def leave(self, drone, next_hub):
+    def leave(self, drone: Any, next_hub: Hub) -> None:
         c = drone.current_hub
         if c:
             c.current_drones -= 1
@@ -46,7 +47,7 @@ class Simulation:
         next_hub.connections[c.name]['current_link_drones'] += 1
         drone.in_transit_to = next_hub
 
-    def arrive(self, drone):
+    def arrive(self, drone: Any) -> None:
         c = 'current_link_drones'
         drone.current_hub.connections[drone.in_transit_to.name][c] -= 1
         drone.in_transit_to.connections[drone.current_hub.name][c] -= 1
@@ -54,7 +55,7 @@ class Simulation:
         drone.current_hub = drone.in_transit_to
         drone.in_transit_to = None
 
-    def start(self):
+    def start(self) -> None:
         self.parser.load_file()
         if self.parser.parsing_safe:
             print('Parsing successful.')
@@ -64,17 +65,17 @@ class Simulation:
         else:
             print('Parsing failed.')
 
-    def get_neighbors(self, hub: Hub) -> Hub:
+    def get_neighbors(self, hub: Hub) -> set[Hub]:
         return {
             self.map[target]
             for target in hub.connections
             if self.map[target].zone.value != inf
         }
 
-    def set_costs(self):
+    def set_costs(self) -> None:
         m = self.map.values()
-        end_hub = next((h for h in m if h.hub_type == 'end_hub'), None)
-        start_hub = next((h for h in m if h.hub_type == 'start_hub'), None)
+        end_hub = next((h for h in m if h.hub_type == 'end_hub'))
+        start_hub = next((h for h in m if h.hub_type == 'start_hub'))
         end_hub.cost = 0
         visited = {end_hub}
         current_level = list(self.get_neighbors(end_hub))
@@ -95,7 +96,7 @@ class Simulation:
             current_level = list(next_level)
             cost += 1
 
-    def set_heuristics(self):
+    def set_heuristics(self) -> None:
         from math import sqrt
         m = self.map.values()
         end_hub = next((h for h in m if h.hub_type == 'end_hub'), None)
@@ -103,13 +104,13 @@ class Simulation:
             return
         for hub in self.map.values():
             if hub.cost == inf:
-                hub.heuristic = inf
+                hub.heuristic = int(inf)
             else:
                 dx = hub.x - end_hub.x
                 dy = hub.y - end_hub.y
                 hub.heuristic = int(sqrt(dx * dx + dy * dy))
 
-    def print_state(self, turn):
+    def print_state(self, turn: int) -> None:
         print(f'\n--- Turn {turn} ---')
         for hub in self.map.values():
             if hub.current_drones > 0 or any(
@@ -118,7 +119,7 @@ class Simulation:
             ):
                 hub.show_hub()
 
-    def create_map(self):
+    def create_map(self) -> None:
         configs = self.parser.configs
         self.nb_drones = configs['nb_drones']
         for name, data in configs['hubs'].items():

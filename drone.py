@@ -19,7 +19,7 @@ class Drone():
     def reached_goal(self) -> bool:
         return self.current_hub == self.goal
 
-    def tick(self, sim: Simulation):
+    def tick(self, sim: Simulation) -> None:
         if self.reached_goal:
             return
         if self.in_transit_to:
@@ -33,7 +33,9 @@ class Drone():
         else:
             sim.move(self, next_hub)
 
-    def next_move(self, sim: Simulation):
+    def next_move(self, sim: Simulation) -> Hub | None:
+        if self.current_hub is None:
+            return None
         valid = {n for n in sim.get_neighbors(self.current_hub)
                  if n.cost <= self.current_hub.cost
                  and n.capacity > 0

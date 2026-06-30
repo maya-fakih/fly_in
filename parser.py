@@ -55,7 +55,7 @@ class GraphParser:
         except Exception as exc:
             print(exc)
 
-    def check_start_end_capacity(self):
+    def check_start_end_capacity(self) -> None:
         """Validates that start and end hubs have no capacity limit."""
         for name, hub in self.configs['hubs'].items():
             if hub['type'] in ('start_hub', 'end_hub'):
