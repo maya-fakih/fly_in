@@ -166,7 +166,7 @@ class GraphParser:
                     raise errors.MetaDataTypeError(line)
             else:
                 raise errors.MetaDataTypeError(line)
-        if color == None:
+        if color is None:
             color = self.validate_color('grey', line)
         return {'color': color, 'max_drones': max_drones, 'zone': zone}
 

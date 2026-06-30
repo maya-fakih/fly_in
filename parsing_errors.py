@@ -185,7 +185,6 @@ __all__ = [
     'IntTypeError',
     'NameTypeError',
     'MetaDataTypeError',
-    'CoordinatesTypeError',
     'HubTypeError',
     'FormatError',
     'HubFormat',

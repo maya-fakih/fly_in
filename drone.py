@@ -18,7 +18,7 @@ class Drone():
     @property
     def reached_goal(self) -> bool:
         return self.current_hub == self.goal
-    
+
     def tick(self, sim: Simulation):
         if self.reached_goal:
             return
@@ -32,13 +32,13 @@ class Drone():
             sim.leave(self, next_hub)
         else:
             sim.move(self, next_hub)
-    
+
     def next_move(self, sim: Simulation):
         valid = {n for n in sim.get_neighbors(self.current_hub)
-         if n.cost <= self.current_hub.cost  # <= not 
-         and n.capacity > 0
-         and n.heuristic <= self.current_hub.heuristic
-         and (n.zone.value != 2 or self.current_hub.link_available(n))}
+                 if n.cost <= self.current_hub.cost
+                 and n.capacity > 0
+                 and n.heuristic <= self.current_hub.heuristic
+                 and (n.zone.value != 2 or self.current_hub.link_available(n))}
         if not valid:
             return None
         return min(valid, key=lambda n: (n.estimate, n.cost))

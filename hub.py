@@ -1,8 +1,6 @@
 """Hub file for hub representation."""
 from math import inf
 
-from hub_type import HubType
-
 from zone_types import Zones
 
 
@@ -36,7 +34,7 @@ class Hub:
         if self.max_drones == inf:
             return 0
         return self.current_drones / self.max_drones
-    
+
     @property
     def capacity(self):
         return self.max_drones - self.current_drones
@@ -58,4 +56,5 @@ class Hub:
         ]
         if in_transit:
             transit = f' → in transit: {", ".join(in_transit)}'
-        print(f'{self.name} {status} cost={self.cost} h={self.heuristic}{transit}')
+        h = self.heuristic
+        print(f'{self.name} {status} cost={self.cost} h={h}{transit}')

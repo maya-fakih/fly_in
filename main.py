@@ -16,6 +16,7 @@ def check_input_arguments():
         print('Usage: python main.py <configuration_file>')
         sys.exit(1)
 
+
 def main():
     """Entry point for the application.
 

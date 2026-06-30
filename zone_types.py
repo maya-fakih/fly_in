@@ -4,6 +4,7 @@ from enum import Enum
 
 from math import inf
 
+
 class Zones(Enum):
     """Zone types and traversal costs.
 
