@@ -15,10 +15,14 @@ class Simulation:
         self.parser = GraphParser(self.config_map)
         self.nb_drones = 0
         self.map: dict[str, Hub] = {}
+        self.file = "log.txt"
         self.start()
+        
 
     def run(self) -> None:
         from drone import Drone
+        with open(self.file, "w") as file:
+            pass
         start = next(h for h in self.map.values() if h.hub_type == 'start_hub')
         goal = next(h for h in self.map.values() if h.hub_type == 'end_hub')
         self.drones = [Drone(goal) for _ in range(self.nb_drones)]
@@ -27,10 +31,15 @@ class Simulation:
         turn = 0
         while not all(d.reached_goal for d in self.drones):
             turn += 1
-            for drone in self.drones:
-                drone.tick(self)
-            print('-------------------------------')
-            self.print_state(turn)
+            moves = []
+            for i in range(len(self.drones)):
+                log = self.drones[i].tick(self)
+                if log:
+                    moves.append(f"D{i}-{log}")
+            with open(self.file, "a") as file:
+                line = " ".join(moves)
+                file.write(f"{line}\n")
+
         print('all drones reached end sucsessfully')
 
     def move(self, drone: Any, next_hub: Hub) -> None:

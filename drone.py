@@ -19,19 +19,21 @@ class Drone():
     def reached_goal(self) -> bool:
         return self.current_hub == self.goal
 
-    def tick(self, sim: Simulation) -> None:
+    def tick(self, sim: Simulation) -> str:
         if self.reached_goal:
-            return
+            return ""
         if self.in_transit_to:
             sim.arrive(self)
-            return
+            return ""
         next_hub = self.next_move(sim)
         if not next_hub:
-            return
+            return ""
         if next_hub.zone.value == 2:
             sim.leave(self, next_hub)
+            return str(next_hub.name)
         else:
             sim.move(self, next_hub)
+            return str(next_hub.name)
 
     def next_move(self, sim: Simulation) -> Hub | None:
         if self.current_hub is None:
